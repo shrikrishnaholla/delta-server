@@ -8,6 +8,13 @@ import ast
 app = Flask(__name__)
 api = restful.Api(app)
 
+def json_type(json_str):
+    try:
+        s = json.loads(json_str)
+        return True
+    except Exception, e:
+        raise Exception("Improper data. Use JSON strings")
+
 class User(restful.Resource):
     def get(self, email):
         r = redis.StrictRedis(host = 'localhost', port = 6379, db=0)
@@ -23,7 +30,7 @@ class UserList(restful.Resource):
 
         parser = reqparse.RequestParser()
         parser.add_argument('email', type = str, required = True, location = 'form')
-        parser.add_argument('data', type = str, required = True, location = 'form')
+        parser.add_argument('data', type = json_type, required = True, location = 'form')
 
         args = parser.parse_args()
 
@@ -69,7 +76,7 @@ class Reco(restful.Resource):
                     continue
                 print r.get(rand_user_email)
                 rand_user_data = r.get(rand_user_email)
-                rand_user_data_json = json.loads(rand_user_data)
+                rand_user_data_json = json.loads(r.get(rand_user_email))
 
                 # if user and reco_user belong to the same bucket, do another rand
                 if rand_user_data_json.get('bucket') is None:
