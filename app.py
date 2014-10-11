@@ -6,10 +6,6 @@ import redis
 app = Flask(__name__)
 api = restful.Api(app)
 
-class HelloWorld(restful.Resource):
-    def get(self):
-        return {'hello': 'world'}
-
 class User(restful.Resource):
     def get(self, email):
         r = redis.StrictRedis(host = 'localhost', port = 6379, db=0)
@@ -25,7 +21,9 @@ class UserList(restful.Resource):
 
         parser = reqparse.RequestParser()
         parser.add_argument('email', type = str, required = True, location = 'form')
-        parser.add_argument('data', required = True, location = 'form')
+        parser.add_argument('first_name', required = True, location = 'form')
+        parser.add_argument('title', required = True, location = 'form')
+
         args = parser.parse_args()
 
         user_email = args.get('email')
@@ -43,15 +41,12 @@ class Reco(restful.Resource):
         r = redis.StrictRedis(host = 'localhost', port = 6379, db=0)
         if r.exists(email):
             rand_user = r.randomkey()
-            print rand_user
             while (rand_user == email):
                 rand_user = r.randomkey()
             return {'email': rand_user, 'data': r.get(rand_user)}, 200
         else:
             return {'message': 'User does not exist'}, 400
 
-
-api.add_resource(HelloWorld, '/')
 api.add_resource(User, '/user/<string:email>')
 api.add_resource(UserList, '/user')
 api.add_resource(Reco, '/user/<string:email>/reco')
